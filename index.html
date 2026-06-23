@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ET Signals Pipeline Audit</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f6f8;color:#1a1a1a;padding:20px}
+.wrap{max-width:1100px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:28px 32px}
+.hdr{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.hdr h1{font-size:22px;font-weight:600}
+.hdr .bdg{font-size:11px;padding:4px 12px;border-radius:6px;background:#FEE2E2;color:#B91C1C;font-weight:500}
+.sub{font-size:13px;color:#6b7280;margin-bottom:18px}
+.leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#6b7280;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #e5e7eb}
+.leg span{display:flex;align-items:center;gap:6px}
+.ld{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.tabs{display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:0}
+.tab{padding:12px 24px;font-size:14px;font-weight:500;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab:hover{color:#111}
+.tab.on{color:#2563EB;border-bottom-color:#2563EB}
+.pnl{display:none}.pnl.on{display:block}
+.cb{padding:16px 0 12px}
+.cn{font-size:18px;font-weight:600}
+.cs{font-size:12px;color:#6b7280;margin-top:2px}
+.sts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.st{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center}
+.st .sl{font-size:11px;color:#6b7280;margin-bottom:4px}
+.st .sv{font-size:15px;font-weight:600}
+.ws{margin-bottom:8px}
+.wh{display:flex;align-items:center;gap:10px;padding:12px 0;cursor:pointer;user-select:none;border-bottom:1px solid #e5e7eb}
+.wh .ico{font-size:18px;width:24px;text-align:center}
+.wh .wl{font-size:15px;font-weight:600;flex:1}
+.wh .cnt{font-size:11px;color:#6b7280;background:#f3f4f6;padding:3px 10px;border-radius:6px}
+.wh .ar{font-size:11px;color:#9ca3af;transition:transform .2s;display:inline-block}
+.wh .ar.open{transform:rotate(90deg)}
+.wb{display:none;padding:10px 0}.wb.open{display:block}
+.gr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:12px}
+.bx{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.6}
+.lf{border-left:4px solid #10B981}.rt{border-left:4px solid #3B82F6}
+.bl{font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.ql{font-weight:600;color:#6b7280;font-size:11px;margin:8px 0 4px}
+.cd{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #f3f4f6}
+.cd:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.ct{font-weight:600;font-size:13px}
+.cc{font-size:10px;color:#6b7280;margin-top:2px}
+.cr{font-size:11.5px;color:#6b7280;margin-top:3px;line-height:1.5}
+.tg{display:inline-block;font-size:9px;padding:2px 7px;border-radius:5px;margin-left:4px;vertical-align:middle;white-space:nowrap;font-weight:600}
+.tok{background:#D1FAE5;color:#065F46}
+.tcx{background:#FEF3C7;color:#92400E}
+.tbd{background:#FEE2E2;color:#991B1B}
+.tdp{background:#FCE7F3;color:#9D174D}
+.sc{display:inline-block;font-size:10px;font-weight:600;background:#f3f4f6;color:#6b7280;padding:2px 7px;border-radius:5px;margin-left:3px}
+.ms{color:#DC2626;font-style:italic;font-size:12px}
+.inv{color:#DC2626}
+@media(max-width:768px){
+.gr{grid-template-columns:1fr}
+.sts{grid-template-columns:repeat(2,1fr)}
+.tab{padding:10px 14px;font-size:13px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hdr">
+  <h1>ET Signals Pipeline Audit</h1>
+  <span class="bdg">3 companies</span>
+</div>
+<div class="sub">Side-by-side: what interviewees told Nikhar vs what the app shows</div>
+<div class="leg">
+  <span><span class="ld" style="background:#10B981"></span> Nikhar's interview (source)</span>
+  <span><span class="ld" style="background:#3B82F6"></span> App output</span>
+  <span><span class="ld" style="background:#D1FAE5"></span> Correct</span>
+  <span><span class="ld" style="background:#FEF3C7"></span> Context supports</span>
+  <span><span class="ld" style="background:#FEE2E2"></span> Fabricated</span>
+  <span><span class="ld" style="background:#FCE7F3"></span> Duplicate</span>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="tab on" data-i="0">Axis Securities</div>
+  <div class="tab" data-i="1">Punjab National Bank</div>
+  <div class="tab" data-i="2">Acko General Insurance</div>
+</div>
+
+<!-- ===== AXIS ===== -->
+<div class="pnl on" id="p0">
+<div class="cb"><div class="cn">Axis Securities</div><div class="cs">Vipul Kesariya, VP - IT &middot; 19 Sep 2025 &middot; ETCISO AC25</div></div>
+<div class="sts">
+  <div class="st"><div class="sl">Pain Points</div><div class="sv">3 said &rarr; 7</div></div>
+  <div class="st"><div class="sl">POCs</div><div class="sv">2 real &rarr; 6</div></div>
+  <div class="st"><div class="sl">Vendors</div><div class="sv">5 said &rarr; 4</div></div>
+  <div class="st"><div class="sl">Expectations</div><div class="sv">0 asked &rarr; 16</div></div>
+</div>
+
+<!-- Pain Points -->
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#9888;</span><span class="wl">Pain Points</span><span class="cnt">3 correct &middot; 3 context &middot; 1 fabricated</span><span class="ar open">&#9654;</span></div>
+<div class="wb open">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; Q: "Top 3 challenges in cybersecurity"</div>
+    <div class="cd">1. Regulatory compliance: Meeting SEBI and financial guidelines.</div>
+    <div class="cd">2. Insider threats: Preventing misuse of trading or client data.</div>
+    <div class="cd">3. Data privacy: Safeguarding customer investment details.</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 7 pain points</div>
+    <div class="cd"><div class="ct">1. Facing regulatory and compliance pressure <span class="sc">92</span> <span class="tg tok">correct</span></div><div class="cc">Regulatory Compliance & Audit</div><div class="cr">SEBI and financial regulatory compliance as top challenge.</div></div>
+    <div class="cd"><div class="ct">2. Privileged access misuse and insider abuse <span class="sc">87</span> <span class="tg tok">correct</span></div><div class="cc">Identity & Access Management</div><div class="cr">Insider threats &mdash; misuse of trading and client data &mdash; top-3 challenge.</div></div>
+    <div class="cd"><div class="ct">3. Protecting sensitive customer / PII data <span class="sc">83</span> <span class="tg tok">correct</span></div><div class="cc">Data Privacy & DPDP Compliance</div><div class="cr">Safeguarding customer investment details, &pound;10 Cr to data privacy.</div></div>
+    <div class="cd"><div class="ct">4. Compliance burden constrains budget <span class="sc">68</span> <span class="tg tcx">context &mdash; said "Limits: Budget" under drivers</span></div><div class="cc">Regulatory Compliance & Audit</div></div>
+    <div class="cd"><div class="ct inv">5. Alert fatigue and overloaded SOC teams <span class="sc">73</span> <span class="tg tbd">fabricated &mdash; never mentioned SOC strain</span></div><div class="cc">Security Operations & Tool Sprawl</div></div>
+    <div class="cd"><div class="ct">6. Securing workloads during cloud migration <span class="sc">58</span> <span class="tg tcx">context &mdash; cloud security is priority + 30% budget</span></div><div class="cc">Cloud Security</div></div>
+    <div class="cd"><div class="ct">7. IAM modernization and identity gaps <span class="sc">64</span> <span class="tg tcx">context &mdash; Zero Trust pilot + IAM planned</span></div><div class="cc">Identity & Access Management</div></div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- POCs -->
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#9879;</span><span class="wl">POCs</span><span class="cnt">2 correct &middot; 4 wrong widget</span><span class="ar">&#9654;</span></div>
+<div class="wb">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; two different questions</div>
+    <div class="ql">Q: "Running POCs & Planned pilots"</div>
+    <div class="cd">AI SOC PoC, Zero Trust pilot</div>
+    <div class="ql">Q: "Planned Investments" (NOT POCs)</div>
+    <div class="cd">SOAR, DSPM, IAM, Threat intel</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 6 POCs</div>
+    <div class="cd"><div class="ct">1. AI-Powered Security Operations <span class="sc">93</span> <span class="tg tok">correct &mdash; real POC</span></div></div>
+    <div class="cd"><div class="ct">2. Zero Trust Network Access <span class="sc">86</span> <span class="tg tok">correct &mdash; real pilot</span></div></div>
+    <div class="cd"><div class="ct inv">3. SOAR <span class="sc">67</span> <span class="tg tbd">wrong widget &mdash; from "Planned Investments"</span></div></div>
+    <div class="cd"><div class="ct inv">4. DSPM <span class="sc">72</span> <span class="tg tbd">wrong widget &mdash; from "Planned Investments"</span></div></div>
+    <div class="cd"><div class="ct inv">5. Identity & Access Governance <span class="sc">54</span> <span class="tg tbd">wrong widget &mdash; from "Planned Investments"</span></div></div>
+    <div class="cd"><div class="ct inv">6. Threat Hunting <span class="sc">46</span> <span class="tg tbd">wrong widget &mdash; from "Planned Investments"</span></div></div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- Vendors -->
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#127970;</span><span class="wl">Vendors</span><span class="cnt">4 correct &middot; 1 dropped</span><span class="ar">&#9654;</span></div>
+<div class="wb">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; Q: "Existing Vendors"</div>
+    <div class="cd">AWS, Microsoft, SOAR vendors, Splunk, Varonis</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 4 vendors</div>
+    <div class="cd"><div class="ct">1. Splunk <span class="tg tok">correct</span></div></div>
+    <div class="cd"><div class="ct">2. Amazon Web Services <span class="tg tok">correct</span></div></div>
+    <div class="cd"><div class="ct">3. Varonis <span class="tg tok">correct</span></div></div>
+    <div class="cd"><div class="ct">4. Microsoft <span class="tg tok">correct</span></div></div>
+    <div class="cd ms">DROPPED: "SOAR vendors" &mdash; generic name, no brand to match</div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- Expectations -->
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#11088;</span><span class="wl">Expectations</span><span class="cnt">10 context &middot; 4 fabricated</span><span class="ar">&#9654;</span></div>
+<div class="wb">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; no expectations question asked</div>
+    <div class="cd ms">Question not in interview format. Some derived from context.</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 16 expectations</div>
+    <div class="cd"><div class="ct">1. SEBI compliance <span class="sc">93</span> <span class="tg tcx">context &mdash; #1 challenge</span></div></div>
+    <div class="cd"><div class="ct">2. AI-driven SOC <span class="sc">88</span> <span class="tg tcx">context &mdash; priority + running POC</span></div></div>
+    <div class="cd"><div class="ct">3. Zero Trust & ZTNA <span class="sc">84</span> <span class="tg tcx">context &mdash; active pilot</span></div></div>
+    <div class="cd"><div class="ct">4. PII protection <span class="sc">81</span> <span class="tg tcx">context &mdash; top-3 challenge + ₹10Cr</span></div></div>
+    <div class="cd"><div class="ct">5. Cloud security <span class="sc">79</span> <span class="tg tcx">context &mdash; 30% budget + priority</span></div></div>
+    <div class="cd"><div class="ct inv">6. PAM <span class="sc">76</span> <span class="tg tbd">fabricated &mdash; never mentioned PAM</span></div></div>
+    <div class="cd"><div class="ct">7. Data governance <span class="sc">73</span> <span class="tg tcx">context &mdash; top spending area</span></div></div>
+    <div class="cd"><div class="ct inv">8. SIEM, XDR/EDR <span class="sc">69</span> <span class="tg tbd">fabricated &mdash; never mentioned</span></div></div>
+    <div class="cd"><div class="ct">9. POC support <span class="sc">67</span> <span class="tg tcx">context &mdash; free PoCs + 1-2% paid</span></div></div>
+    <div class="cd"><div class="ct">10. DLP / classification <span class="sc">64</span> <span class="tg tcx">context &mdash; DSPM planned</span></div></div>
+    <div class="cd"><div class="ct">11. IAM modernization <span class="sc">61</span> <span class="tg tcx">context &mdash; planned + Zero Trust</span></div></div>
+    <div class="cd"><div class="ct">12. Threat intelligence <span class="sc">58</span> <span class="tg tcx">context &mdash; planned investment</span></div></div>
+    <div class="cd"><div class="ct">13. Risk management <span class="sc">53</span> <span class="tg tcx">context &mdash; top spending area</span></div></div>
+    <div class="cd"><div class="ct inv">14. Cost reduction <span class="sc">47</span> <span class="tg tbd">fabricated &mdash; budget limited ≠ asked for cost cuts</span></div></div>
+    <div class="cd"><div class="ct">15. Vendor onboarding <span class="sc">42</span> <span class="tg tcx">context &mdash; PoC + phased onboarding</span></div></div>
+    <div class="cd"><div class="ct inv">16. AI/ML fraud detection <span class="sc">38</span> <span class="tg tbd">fabricated &mdash; never asked for fraud tools</span></div></div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ===== PNB ===== -->
+<div class="pnl" id="p1">
+<div class="cb"><div class="cn">Punjab National Bank</div><div class="cs">Ashwini Pandey Kumar, Group CISO &middot; 19 Sep 2025 + Hemant Verma</div></div>
+<div class="sts">
+  <div class="st"><div class="sl">Pain Points</div><div class="sv">3 said &rarr; 5</div></div>
+  <div class="st"><div class="sl">POCs</div><div class="sv">3 real &rarr; 3</div></div>
+  <div class="st"><div class="sl">Vendors</div><div class="sv">3 said &rarr; 3</div></div>
+  <div class="st"><div class="sl">Expectations</div><div class="sv">0 asked &rarr; 14</div></div>
+</div>
+
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#9888;</span><span class="wl">Pain Points</span><span class="cnt">3 correct &middot; 2 context</span><span class="ar open">&#9654;</span></div>
+<div class="wb open">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; Q: "Top 3 challenges"</div>
+    <div class="cd">1. Building awareness across a large workforce</div>
+    <div class="cd">2. Severe manpower shortages in cyber</div>
+    <div class="cd">3. Managing evolving regulatory pressures</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 5 pain points</div>
+    <div class="cd"><div class="ct">1. Shortage of skilled cybersecurity talent <span class="sc">93</span> <span class="tg tok">correct</span></div><div class="cc">Security Talent & Skills Gap</div></div>
+    <div class="cd"><div class="ct">2. Keeping pace with evolving regulations <span class="sc">88</span> <span class="tg tok">correct</span></div><div class="cc">Regulatory Compliance & Audit</div></div>
+    <div class="cd"><div class="ct">3. Continuous upskilling against threats <span class="sc">86</span> <span class="tg tok">correct</span></div><div class="cc">Security Talent & Skills Gap</div></div>
+    <div class="cd"><div class="ct">4. Integrating legacy with modern platforms <span class="sc">67</span> <span class="tg tcx">context &mdash; legacy restructuring as spending</span></div><div class="cc">Legacy Modernization & Tech Debt</div></div>
+    <div class="cd"><div class="ct">5. Compliance burden constrains budget <span class="sc">62</span> <span class="tg tcx">context &mdash; PSU budget cycles as limiter</span></div><div class="cc">Regulatory Compliance & Audit</div></div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#9879;</span><span class="wl">POCs</span><span class="cnt">3 correct</span><span class="ar">&#9654;</span></div>
+<div class="wb">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; Q: "Running POCs & Planned pilots"</div>
+    <div class="cd">1. Breach attack simulation pilots</div>
+    <div class="cd">2. Cyber range pilots for workforce training</div>
+    <div class="cd">3. Hardware + SOC upgrade pilots</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 3 POCs (all correct)</div>
+    <div class="cd"><div class="ct">1. SOC Build-out / Upgrade <span class="sc">92</span> <span class="tg tok">correct</span></div></div>
+    <div class="cd"><div class="ct">2. Breach & Attack Simulation <span class="sc">88</span> <span class="tg tok">correct</span></div></div>
+    <div class="cd"><div class="ct">3. Cyber Crisis & Incident Response <span class="sc">74</span> <span class="tg tok">correct</span></div></div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#127970;</span><span class="wl">Vendors</span><span class="cnt">3 correct</span><span class="ar">&#9654;</span></div>
+<div class="wb">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; Q: "Existing Vendors"</div>
+    <div class="cd">Palo Alto, Check Point, Forcepoint</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 3 vendors (all correct)</div>
+    <div class="cd"><div class="ct">1. Palo Alto Networks <span class="tg tok">correct</span></div></div>
+    <div class="cd"><div class="ct">2. Check Point Software <span class="tg tok">correct</span></div></div>
+    <div class="cd"><div class="ct">3. Forcepoint <span class="tg tok">correct</span></div></div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#11088;</span><span class="wl">Expectations</span><span class="cnt">10 context &middot; 4 fabricated</span><span class="ar">&#9654;</span></div>
+<div class="wb">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; no expectations question asked</div>
+    <div class="cd ms">Question not in interview format.</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 14 expectations</div>
+    <div class="cd"><div class="ct">1. RBI banking compliance <span class="sc">93</span> <span class="tg tcx">context &mdash; primary driver + ~40% budget</span></div></div>
+    <div class="cd"><div class="ct inv">2. SIEM, XDR/EDR <span class="sc">91</span> <span class="tg tbd">fabricated &mdash; said SOC, never SIEM/XDR</span></div></div>
+    <div class="cd"><div class="ct">3. Red teaming & BAS <span class="sc">87</span> <span class="tg tcx">context &mdash; running BAS pilot</span></div></div>
+    <div class="cd"><div class="ct">4. Skilling & expertise transfer <span class="sc">84</span> <span class="tg tcx">context &mdash; manpower shortage + cyber range</span></div></div>
+    <div class="cd"><div class="ct">5. Network hardening <span class="sc">81</span> <span class="tg tcx">context &mdash; network expansion is priority</span></div></div>
+    <div class="cd"><div class="ct">6. Infrastructure modernization <span class="sc">78</span> <span class="tg tcx">context &mdash; SOC + hardware upgrades</span></div></div>
+    <div class="cd"><div class="ct">7. Enterprise risk management <span class="sc">77</span> <span class="tg tcx">context &mdash; ~40% budget to risk</span></div></div>
+    <div class="cd"><div class="ct">8. Business continuity & DR <span class="sc">74</span> <span class="tg tcx">context &mdash; resilience building priority</span></div></div>
+    <div class="cd"><div class="ct">9. Data governance <span class="sc">68</span> <span class="tg tcx">context &mdash; ~20% to data privacy</span></div></div>
+    <div class="cd"><div class="ct">10. POC support <span class="sc">64</span> <span class="tg tcx">context &mdash; pilots within budget</span></div></div>
+    <div class="cd"><div class="ct inv">11. Scale to capacity <span class="sc">63</span> <span class="tg tbd">fabricated &mdash; never mentioned</span></div></div>
+    <div class="cd"><div class="ct inv">12. Cost reduction <span class="sc">53</span> <span class="tg tbd">fabricated &mdash; constrained ≠ asked for cuts</span></div></div>
+    <div class="cd"><div class="ct inv">13. Vendor consolidation <span class="sc">47</span> <span class="tg tbd">fabricated &mdash; never said wants to consolidate</span></div></div>
+    <div class="cd"><div class="ct">14. Vendor performance monitoring <span class="sc">38</span> <span class="tg tcx">context &mdash; regular evaluations</span></div></div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ===== ACKO ===== -->
+<div class="pnl" id="p2">
+<div class="cb"><div class="cn">Acko General Insurance</div><div class="cs">Naveen Machalra (TPM, 30 Oct 2025) + Ashok Kumar G (CISO, 19 Sep 2025)</div></div>
+<div class="sts">
+  <div class="st"><div class="sl">Pain Points</div><div class="sv">6 said &rarr; 8</div></div>
+  <div class="st"><div class="sl">POCs</div><div class="sv">3+1 &rarr; 4</div></div>
+  <div class="st"><div class="sl">Vendors</div><div class="sv">2 said &rarr; 2</div></div>
+  <div class="st"><div class="sl">Expectations</div><div class="sv">0 asked &rarr; 16</div></div>
+</div>
+
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#9888;</span><span class="wl">Pain Points</span><span class="cnt">4 correct &middot; 4 context</span><span class="ar open">&#9654;</span></div>
+<div class="wb open">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; two interviewees</div>
+    <div class="ql">Q: "Top 3 AI challenges" (Naveen)</div>
+    <div class="cd">1. Governance & accountability for AI models</div>
+    <div class="cd">2. Infrastructure readiness for enterprise scale</div>
+    <div class="cd">3. Driving adoption in cross-functional teams</div>
+    <div class="ql">Q: "Top 3 challenges in cybersecurity" (Ashok)</div>
+    <div class="cd">1. Data leakage risks</div>
+    <div class="cd">2. Secure DevOps</div>
+    <div class="cd">3. Compliance with IRDAI</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 8 pain points</div>
+    <div class="cd"><div class="ct">1. Lacking governance over AI models <span class="sc">91</span> <span class="tg tok">correct &mdash; Naveen</span></div><div class="cc">AI Governance & Accountability</div></div>
+    <div class="cd"><div class="ct">2. Protecting sensitive customer data <span class="sc">87</span> <span class="tg tok">correct &mdash; Ashok</span></div><div class="cc">Data Privacy & DPDP Compliance</div></div>
+    <div class="cd"><div class="ct">3. Scaling AI to enterprise <span class="sc">84</span> <span class="tg tok">correct &mdash; Naveen</span></div><div class="cc">AI Strategy, ROI & Adoption</div></div>
+    <div class="cd"><div class="ct">4. Regulatory and compliance pressure <span class="sc">82</span> <span class="tg tok">correct &mdash; Ashok</span></div><div class="cc">Regulatory Compliance & Audit</div></div>
+    <div class="cd"><div class="ct">5. Data silos and poor quality <span class="sc">77</span> <span class="tg tcx">context &mdash; "data readiness issues" as limiter</span></div><div class="cc">Data Governance & Quality</div></div>
+    <div class="cd"><div class="ct">6. Securing transformation programs <span class="sc">73</span> <span class="tg tcx">context &mdash; "Secure DevOps" reworded</span></div><div class="cc">Digital Transformation & Complexity</div></div>
+    <div class="cd"><div class="ct">7. Slow manual audit evidence <span class="sc">64</span> <span class="tg tcx">context &mdash; compliance automation POC running</span></div><div class="cc">Regulatory Compliance & Audit</div></div>
+    <div class="cd"><div class="ct">8. Shortage of AI talent <span class="sc">58</span> <span class="tg tcx">context &mdash; "talent gap" as limiter</span></div><div class="cc">Security Talent & Skills Gap</div></div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#9879;</span><span class="wl">POCs</span><span class="cnt">2 correct &middot; 2 context</span><span class="ar">&#9654;</span></div>
+<div class="wb">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; two interviewees</div>
+    <div class="ql">Q: "Running POCs" (Naveen)</div>
+    <div class="cd">Developing tools to optimize workflows</div>
+    <div class="ql">Q: "Running POCs & Planned pilots" (Ashok)</div>
+    <div class="cd">1. Compliance automation POC</div>
+    <div class="cd">2. Pilot on secure coding platform</div>
+    <div class="cd">3. Updating IAM tools</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 4 POCs</div>
+    <div class="cd"><div class="ct">1. Compliance & Audit Automation <span class="sc">91</span> <span class="tg tok">correct &mdash; Ashok</span></div></div>
+    <div class="cd"><div class="ct">2. Secure SDLC / DevSecOps <span class="sc">78</span> <span class="tg tok">correct &mdash; Ashok</span></div></div>
+    <div class="cd"><div class="ct">3. Identity & Access Governance <span class="sc">56</span> <span class="tg tcx">context &mdash; upgrade, not new POC</span></div></div>
+    <div class="cd"><div class="ct">4. Agentic AI Workflow Automation <span class="sc">43</span> <span class="tg tcx">context &mdash; internal R&D, not vendor POC</span></div></div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#127970;</span><span class="wl">Vendors</span><span class="cnt">2 correct &middot; 3 tech not shown</span><span class="ar">&#9654;</span></div>
+<div class="wb">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; Q: "Existing Vendors" (Ashok)</div>
+    <div class="cd">Microsoft, Check Point</div>
+    <div class="ql">Q: "Planned AI investments" (Naveen)</div>
+    <div class="cd">Azure Fabric, Cosmos DB, OpenAI integration</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 2 vendors</div>
+    <div class="cd"><div class="ct">1. Microsoft <span class="tg tok">correct</span></div></div>
+    <div class="cd"><div class="ct">2. Check Point Software <span class="tg tok">correct</span></div></div>
+    <div class="cd ms">NOT SHOWN: Azure Fabric, Cosmos DB, OpenAI &mdash; planned tech from Naveen</div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="ws">
+<div class="wh" onclick="tog(this)"><span class="ico">&#11088;</span><span class="wl">Expectations</span><span class="cnt">11 context &middot; 4 fabricated &middot; 1 duplicate</span><span class="ar">&#9654;</span></div>
+<div class="wb">
+<div class="gr">
+  <div class="bx lf">
+    <div class="bl">Nikhar &mdash; no expectations question asked</div>
+    <div class="cd ms">Question not in interview format.</div>
+  </div>
+  <div class="bx rt">
+    <div class="bl">App &mdash; 16 expectations (+1 duplicate)</div>
+    <div class="cd"><div class="ct">1. Audit readiness & RegTech <span class="sc">94</span> <span class="tg tcx">context &mdash; compliance POC + 3-month pilot</span></div></div>
+    <div class="cd"><div class="ct">2. On-prem hosting <span class="sc">91</span> <span class="tg tcx">context &mdash; procurement requirement</span></div></div>
+    <div class="cd"><div class="ct">3. IRDAI compliance <span class="sc">88</span> <span class="tg tcx">context &mdash; Ashok's top-3 challenge</span></div></div>
+    <div class="cd"><div class="ct">4. DevSecOps & CI/CD <span class="sc">87</span> <span class="tg tcx">context &mdash; secure coding pilot</span></div></div>
+    <div class="cd"><div class="ct">5. AI governance <span class="sc">86</span> <span class="tg tcx">context &mdash; Naveen's #1 challenge</span></div></div>
+    <div class="cd"><div class="ct">6. DPDP privacy controls <span class="sc">84</span> <span class="tg tcx">context &mdash; 30% to privacy</span></div></div>
+    <div class="cd"><div class="ct">7. POC support <span class="sc">83</span> <span class="tg tcx">context &mdash; unpaid POCs + 3-month window</span></div></div>
+    <div class="cd"><div class="ct inv">8. Data classification & DLP <span class="sc">82</span> <span class="tg tbd">fabricated &mdash; said data leakage, never DLP</span></div></div>
+    <div class="cd"><div class="ct inv">9. Audit readiness (again) <span class="sc">79</span> <span class="tg tdp">DUPLICATE of #1</span></div></div>
+    <div class="cd"><div class="ct">10. Data governance <span class="sc">78</span> <span class="tg tcx">context &mdash; data lineage + quality</span></div></div>
+    <div class="cd"><div class="ct">11. IAM modernization <span class="sc">76</span> <span class="tg tcx">context &mdash; planned + updating</span></div></div>
+    <div class="cd"><div class="ct inv">12. Security-by-design <span class="sc">73</span> <span class="tg tbd">fabricated &mdash; too generic</span></div></div>
+    <div class="cd"><div class="ct">13. Enterprise risk management <span class="sc">71</span> <span class="tg tcx">context &mdash; GRC planned</span></div></div>
+    <div class="cd"><div class="ct inv">14. Unified AppSec platform <span class="sc">69</span> <span class="tg tbd">fabricated &mdash; never said unified</span></div></div>
+    <div class="cd"><div class="ct inv">15. General regulatory <span class="sc">67</span> <span class="tg tbd">fabricated &mdash; too vague</span></div></div>
+    <div class="cd"><div class="ct">16. Secure AI deployment <span class="sc">63</span> <span class="tg tcx">context &mdash; infra readiness</span></div></div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<script>
+document.getElementById('tabs').addEventListener('click',function(e){
+  var t=e.target.closest('.tab');if(!t)return;
+  var i=t.dataset.i;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.pnl').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  document.getElementById('p'+i).classList.add('on');
+});
+function tog(el){
+  var w=el.nextElementSibling,a=el.querySelector('.ar');
+  w.classList.toggle('open');a.classList.toggle('open');
+}
+</script>
+</body>
+</html>
